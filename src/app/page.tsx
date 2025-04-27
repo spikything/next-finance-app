@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const SYMBOLS = ["BTC/USD"];
 
@@ -19,14 +19,16 @@ export default function HomePage() {
   );
 
   const [isWebSocketAlive, setIsWebSocketAlive] = useState(true);
+  const wsRef = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
+  const connectWebSocket = () => {
     const ws = new WebSocket(
       `wss://ws.twelvedata.com/v1/quotes/price?apikey=${process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY}`
     );
 
     ws.onopen = () => {
       console.log("WebSocket connected");
+      setIsWebSocketAlive(true);
       ws.send(
         JSON.stringify({
           action: "subscribe",
@@ -77,15 +79,27 @@ export default function HomePage() {
     ws.onerror = (error) => {
       console.error("WebSocket error:", error);
       setIsWebSocketAlive(false);
+      ws.close();
     };
 
     ws.onclose = (event) => {
-      console.log("WebSocket closed", event);
+      console.warn("WebSocket closed", event);
       setIsWebSocketAlive(false);
+
+      setTimeout(() => {
+        console.log("Attempting to reconnect WebSocket...");
+        connectWebSocket();
+      }, 3000);
     };
 
+    wsRef.current = ws;
+  };
+
+  useEffect(() => {
+    connectWebSocket();
+
     return () => {
-      ws.close();
+      wsRef.current?.close();
     };
   }, []);
 
@@ -95,7 +109,7 @@ export default function HomePage() {
 
       {!isWebSocketAlive && (
         <div className="mb-6 p-4 bg-yellow-200 border border-yellow-400 text-yellow-800 rounded">
-          ⚠️ Live prices unavailable
+          ⚠️ Live prices unavailable. Reconnecting...
         </div>
       )}
 
