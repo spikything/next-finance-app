@@ -2,13 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import PriceChart from "@/components/PriceChart";
+import CandlestickChart from "@/components/CandlestickChart";
 
 const SYMBOLS = ["BTC/USD"];
+const CANDLE_SIZE = 30;
 
 type PriceState = {
   price: string;
   change: "up" | "down" | "none";
   flash: boolean;
+};
+
+type Candle = {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  updates?: number;
 };
 
 export default function HomePage() {
@@ -20,7 +30,7 @@ export default function HomePage() {
   );
 
   const [priceHistory, setPriceHistory] = useState<number[]>([]);
-
+  const [candles, setCandles] = useState<Candle[]>([]);
   const [isWebSocketAlive, setIsWebSocketAlive] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -73,6 +83,44 @@ export default function HomePage() {
           return updated;
         });
 
+        setCandles((prev) => {
+          if (prev.length === 0) {
+            return [
+              {
+                open: numericPrice,
+                high: numericPrice,
+                low: numericPrice,
+                close: numericPrice,
+                updates: 1,
+              },
+            ];
+          }
+
+          const lastCandle = { ...prev[prev.length - 1] };
+
+          if ((lastCandle.updates || 0) >= CANDLE_SIZE) {
+            // Start a new candle
+            return [
+              ...prev,
+              {
+                open: numericPrice,
+                high: numericPrice,
+                low: numericPrice,
+                close: numericPrice,
+                updates: 1,
+              },
+            ];
+          } else {
+            // Update current candle
+            lastCandle.high = Math.max(lastCandle.high, numericPrice);
+            lastCandle.low = Math.min(lastCandle.low, numericPrice);
+            lastCandle.close = numericPrice;
+            lastCandle.updates = (lastCandle.updates || 0) + 1;
+
+            return [...prev.slice(0, prev.length - 1), lastCandle];
+          }
+        });
+
         setTimeout(() => {
           setPrices((prev) => ({
             ...prev,
@@ -114,7 +162,9 @@ export default function HomePage() {
 
   return (
     <main className="p-8">
-      <h1 className="text-2xl font-bold mb-6">Live Market Prices</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        Realtime Bitcoin price chart using Twelvedata and Next.js
+      </h1>
 
       {!isWebSocketAlive && (
         <div className="mb-6 p-4 bg-yellow-200 border border-yellow-400 text-yellow-800 rounded">
@@ -147,6 +197,7 @@ export default function HomePage() {
       </ul>
 
       <PriceChart data={priceHistory} />
+      <CandlestickChart candles={candles} />
     </main>
   );
 }
