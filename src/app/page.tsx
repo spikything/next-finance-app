@@ -20,7 +20,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const ws = new WebSocket(
-      "wss://ws.twelvedata.com/v1/quotes/price?apikey=[APIKEY]"
+      `wss://ws.twelvedata.com/v1/quotes/price?apikey=${process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY}`
     );
 
     ws.onopen = () => {
