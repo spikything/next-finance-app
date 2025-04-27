@@ -68,7 +68,7 @@ export default function HomePage() {
               flash: false,
             },
           }));
-        }, 1000);
+        }, 500);
       }
     };
 
@@ -95,14 +95,14 @@ export default function HomePage() {
           return (
             <li
               key={symbol}
-              className={`border p-4 rounded transition-colors duration-500 ${
+              className={`border p-4 rounded ${
                 flash
                   ? change === "up"
-                    ? "bg-green-100"
+                    ? "bg-green-500"
                     : change === "down"
-                    ? "bg-red-100"
+                    ? "bg-red-500"
                     : ""
-                  : ""
+                  : "transition-colors duration-700"
               }`}
             >
               <strong>{symbol}</strong>: {price}
