@@ -18,6 +18,8 @@ export default function HomePage() {
     }, {} as Record<string, PriceState>)
   );
 
+  const [isWebSocketAlive, setIsWebSocketAlive] = useState(true);
+
   useEffect(() => {
     const ws = new WebSocket(
       `wss://ws.twelvedata.com/v1/quotes/price?apikey=${process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY}`
@@ -74,10 +76,12 @@ export default function HomePage() {
 
     ws.onerror = (error) => {
       console.error("WebSocket error:", error);
+      setIsWebSocketAlive(false);
     };
 
-    ws.onclose = () => {
-      console.log("WebSocket closed");
+    ws.onclose = (event) => {
+      console.log("WebSocket closed", event);
+      setIsWebSocketAlive(false);
     };
 
     return () => {
@@ -88,6 +92,13 @@ export default function HomePage() {
   return (
     <main className="p-8">
       <h1 className="text-2xl font-bold mb-6">Live Market Prices</h1>
+
+      {!isWebSocketAlive && (
+        <div className="mb-6 p-4 bg-yellow-200 border border-yellow-400 text-yellow-800 rounded">
+          ⚠️ Live prices unavailable
+        </div>
+      )}
+
       <ul className="space-y-4">
         {SYMBOLS.map((symbol) => {
           const { price, change, flash } = prices[symbol];
@@ -95,17 +106,18 @@ export default function HomePage() {
           return (
             <li
               key={symbol}
-              className={`border p-4 rounded ${
+              className={`border p-4 rounded font-mono text-lg ${
                 flash
                   ? change === "up"
-                    ? "bg-green-500"
+                    ? "bg-green-500 text-white"
                     : change === "down"
-                    ? "bg-red-500"
+                    ? "bg-red-500 text-white"
                     : ""
                   : "transition-colors duration-700"
               }`}
             >
-              <strong>{symbol}</strong>: {price}
+              <strong>{symbol}</strong>: {price}{" "}
+              {change === "up" ? "↑" : change === "down" ? "↓" : ""}
             </li>
           );
         })}
