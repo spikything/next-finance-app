@@ -9,13 +9,12 @@ type PriceChartProps = {
 
 export default function PriceChart({ data }: PriceChartProps) {
   const ref = useRef<SVGSVGElement | null>(null);
+  const pathRef = useRef<SVGPathElement | null>(null);
 
   useEffect(() => {
     if (!ref.current) return;
 
     const svg = d3.select(ref.current);
-    svg.selectAll("*").remove();
-
     const width = 300;
     const height = 100;
     const margin = { top: 10, right: 10, bottom: 10, left: 10 };
@@ -36,13 +35,22 @@ export default function PriceChart({ data }: PriceChartProps) {
       .y((d) => y(d))
       .curve(d3.curveMonotoneX);
 
-    svg
-      .append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", "#3b82f6")
-      .attr("stroke-width", 2)
-      .attr("d", line(data) || "");
+    if (!pathRef.current) {
+      pathRef.current = svg
+        .append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "#3b82f6")
+        .attr("stroke-width", 2)
+        .attr("d", line(data) || "")
+        .node();
+    } else {
+      d3.select(pathRef.current)
+        .datum(data)
+        .transition()
+        .duration(400)
+        .attr("d", line(data) || "");
+    }
   }, [data]);
 
   return <svg ref={ref} width={300} height={100} />;
