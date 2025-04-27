@@ -7,12 +7,13 @@ const SYMBOLS = ["BTC/USD"];
 type PriceState = {
   price: string;
   change: "up" | "down" | "none";
+  flash: boolean;
 };
 
 export default function HomePage() {
   const [prices, setPrices] = useState<Record<string, PriceState>>(() =>
     SYMBOLS.reduce((acc, symbol) => {
-      acc[symbol] = { price: "Loading...", change: "none" };
+      acc[symbol] = { price: "Loading...", change: "none", flash: false };
       return acc;
     }, {} as Record<string, PriceState>)
   );
@@ -54,9 +55,20 @@ export default function HomePage() {
             [symbol]: {
               price: numericPrice.toFixed(2),
               change,
+              flash: change !== "none",
             },
           };
         });
+
+        setTimeout(() => {
+          setPrices((prev) => ({
+            ...prev,
+            [symbol]: {
+              ...prev[symbol],
+              flash: false,
+            },
+          }));
+        }, 1000);
       }
     };
 
@@ -78,16 +90,18 @@ export default function HomePage() {
       <h1 className="text-2xl font-bold mb-6">Live Market Prices</h1>
       <ul className="space-y-4">
         {SYMBOLS.map((symbol) => {
-          const { price, change } = prices[symbol];
+          const { price, change, flash } = prices[symbol];
 
           return (
             <li
               key={symbol}
-              className={`border p-4 rounded ${
-                change === "up"
-                  ? "text-green-600"
-                  : change === "down"
-                  ? "text-red-600"
+              className={`border p-4 rounded transition-colors duration-500 ${
+                flash
+                  ? change === "up"
+                    ? "bg-green-100"
+                    : change === "down"
+                    ? "bg-red-100"
+                    : ""
                   : ""
               }`}
             >
