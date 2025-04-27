@@ -7,7 +7,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const ws = new WebSocket(
-      "wss://ws.twelvedata.com/v1/quotes/price?apikey=demo"
+      "wss://ws.twelvedata.com/v1/quotes/price?apikey=[APIKEY]"
     );
 
     ws.onopen = () => {
