@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import PriceChart from "@/components/PriceChart";
 
 const SYMBOLS = ["BTC/USD"];
 
@@ -17,6 +18,8 @@ export default function HomePage() {
       return acc;
     }, {} as Record<string, PriceState>)
   );
+
+  const [priceHistory, setPriceHistory] = useState<number[]>([]);
 
   const [isWebSocketAlive, setIsWebSocketAlive] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
@@ -62,6 +65,12 @@ export default function HomePage() {
               flash: change !== "none",
             },
           };
+        });
+
+        setPriceHistory((prev) => {
+          const updated = [...prev, numericPrice];
+          if (updated.length > 50) updated.shift();
+          return updated;
         });
 
         setTimeout(() => {
@@ -136,6 +145,8 @@ export default function HomePage() {
           );
         })}
       </ul>
+
+      <PriceChart data={priceHistory} />
     </main>
   );
 }
