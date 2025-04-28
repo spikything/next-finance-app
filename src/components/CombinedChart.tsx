@@ -48,11 +48,6 @@ export default function CombinedChart({
       .domain([0, candles.length - 1])
       .range([margin.left, width - margin.right]);
 
-    const xPrices = d3
-      .scaleLinear()
-      .domain([0, prices.length - 1])
-      .range([margin.left, width - margin.right]);
-
     const group = svg.append("g");
 
     // --- Draw Gridlines ---
@@ -61,7 +56,7 @@ export default function CombinedChart({
     const yAxisGrid = d3
       .axisLeft(y)
       .tickSize(-(width - margin.left - margin.right))
-      .tickFormat(() => ""); // no numbers, just grid lines
+      .tickFormat(() => "");
 
     group
       .append("g")
@@ -69,7 +64,7 @@ export default function CombinedChart({
       .attr("transform", `translate(${margin.left},0)`)
       .call(yAxisGrid)
       .selectAll("line")
-      .attr("stroke", "#e5e7eb") // Tailwind gray-200
+      .attr("stroke", "#e5e7eb")
       .attr("stroke-dasharray", "2,2");
 
     // Vertical gridlines (time)
@@ -90,7 +85,7 @@ export default function CombinedChart({
 
     // --- Draw Candlesticks ---
     candles.forEach((candle, i) => {
-      const color = candle.close > candle.open ? "#22c55e" : "#ef4444"; // green/red
+      const color = candle.close > candle.open ? "#22c55e" : "#ef4444";
       const bodyHeight = Math.abs(y(candle.open) - y(candle.close)) || 1;
 
       group
@@ -112,19 +107,21 @@ export default function CombinedChart({
     });
 
     // --- Draw Line Chart ---
+    const closePrices = candles.map((c) => c.close);
+
     const line = d3
       .line<number>()
-      .x((_, i) => xPrices(i))
+      .x((_, i) => xCandles(i))
       .y((d) => y(d))
       .curve(d3.curveMonotoneX);
 
     group
       .append("path")
-      .datum(prices)
+      .datum(closePrices)
       .attr("fill", "none")
       .attr("stroke", "#3b82f6")
       .attr("stroke-width", 2)
-      .attr("d", line(prices) || "");
+      .attr("d", line(closePrices) || "");
 
     // --- Draw Y-Axis (Price scale) ---
     const yAxis = d3.axisLeft(y).ticks(6);
@@ -134,12 +131,8 @@ export default function CombinedChart({
       .attr("transform", `translate(${margin.left},0)`)
       .call(yAxis)
       .selectAll("text")
-      .attr("fill", "#6b7280") // Tailwind gray-500
+      .attr("fill", "#6b7280")
       .attr("font-size", "12px");
-
-    // (Optional) X-Axis (Time ticks)
-    // Could be timestamps or indices if you want
-    // For now, skip real time labels since no real timestamps yet
   }, [candles, prices, height, width]);
 
   return <svg ref={ref} width={width} height={height} />;
