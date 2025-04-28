@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import PriceChart from "@/components/PriceChart";
-import CandlestickChart from "@/components/CandlestickChart";
+import CombinedChart from "@/components/CombinedChart";
 
 const SYMBOLS = ["BTC/USD"];
 const CANDLE_SIZE = 30;
@@ -58,6 +57,7 @@ export default function HomePage() {
         const { symbol, price } = data;
         const numericPrice = parseFloat(price);
 
+        // MARK: PRICES
         setPrices((prev) => {
           const prevNumeric = parseFloat(prev[symbol]?.price || "0");
           let change: "up" | "down" | "none" = "none";
@@ -77,12 +77,14 @@ export default function HomePage() {
           };
         });
 
+        // MARK: HISTORY
         setPriceHistory((prev) => {
           const updated = [...prev, numericPrice];
           if (updated.length > 50) updated.shift();
           return updated;
         });
 
+        // MARK: CANDLES
         setCandles((prev) => {
           if (prev.length === 0) {
             return [
@@ -121,6 +123,7 @@ export default function HomePage() {
           }
         });
 
+        // MARK: ANIMATION
         setTimeout(() => {
           setPrices((prev) => ({
             ...prev,
@@ -133,6 +136,7 @@ export default function HomePage() {
       }
     };
 
+    // MARK: ERRORS
     ws.onerror = (error) => {
       console.error("WebSocket error:", error);
       setIsWebSocketAlive(false);
@@ -152,14 +156,17 @@ export default function HomePage() {
     wsRef.current = ws;
   };
 
+  // MARK: STARTUP
   useEffect(() => {
     connectWebSocket();
 
     return () => {
       wsRef.current?.close();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // connectWebSocket should not be a dependency unless wrapped in a useCallback
 
+  // MARK: JSX
   return (
     <main className="p-8">
       <h1 className="text-2xl font-bold mb-6">
@@ -196,8 +203,7 @@ export default function HomePage() {
         })}
       </ul>
 
-      <PriceChart data={priceHistory} />
-      <CandlestickChart candles={candles} />
+      <CombinedChart candles={candles} prices={priceHistory} />
     </main>
   );
 }
