@@ -168,42 +168,48 @@ export default function HomePage() {
 
   // MARK: JSX
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-bold mb-6">
-        Realtime Bitcoin price chart using Twelvedata and Next.js
-      </h1>
+    <main className="p-8 flex justify-center">
+      <div className="w-full max-w-[800px]">
+        <h1 className="text-2xl font-bold mb-6">
+          Realtime Bitcoin price chart using Twelvedata and Next.js
+        </h1>
 
-      {!isWebSocketAlive && (
-        <div className="mb-6 p-4 bg-yellow-200 border border-yellow-400 text-yellow-800 rounded">
-          ⚠️ Live prices unavailable. Reconnecting...
-        </div>
-      )}
+        {!isWebSocketAlive && (
+          <div className="mb-6 p-4 bg-yellow-200 border border-yellow-400 text-yellow-800 rounded">
+            ⚠️ Live prices unavailable. Reconnecting...
+          </div>
+        )}
 
-      <ul className="space-y-4">
-        {SYMBOLS.map((symbol) => {
-          const { price, change, flash } = prices[symbol];
+        <ul className="space-y-4 mb-6">
+          {SYMBOLS.map((symbol) => {
+            const { price, change, flash } = prices[symbol];
+            return (
+              <li
+                key={symbol}
+                className={`border p-4 rounded font-mono text-lg ${
+                  flash
+                    ? change === "up"
+                      ? "bg-green-500 text-white"
+                      : change === "down"
+                      ? "bg-red-500 text-white"
+                      : ""
+                    : "transition-colors duration-700"
+                }`}
+              >
+                <strong>{symbol}</strong>: {price}{" "}
+                {change === "up" ? "↑" : change === "down" ? "↓" : ""}
+              </li>
+            );
+          })}
+        </ul>
 
-          return (
-            <li
-              key={symbol}
-              className={`border p-4 rounded font-mono text-lg ${
-                flash
-                  ? change === "up"
-                    ? "bg-green-500 text-white"
-                    : change === "down"
-                    ? "bg-red-500 text-white"
-                    : ""
-                  : "transition-colors duration-700"
-              }`}
-            >
-              <strong>{symbol}</strong>: {price}{" "}
-              {change === "up" ? "↑" : change === "down" ? "↓" : ""}
-            </li>
-          );
-        })}
-      </ul>
-
-      <CombinedChart candles={candles} prices={priceHistory} />
+        <CombinedChart
+          width={800}
+          height={500}
+          candles={candles}
+          prices={priceHistory}
+        />
+      </div>
     </main>
   );
 }
