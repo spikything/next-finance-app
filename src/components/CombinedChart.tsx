@@ -1,22 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-
-type Candle = {
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  updates?: number;
-};
-
-type CombinedChartProps = {
-  width: number;
-  height: number;
-  candles: Candle[];
-  prices: number[];
-};
 
 export default function CombinedChart({
   width,
@@ -24,6 +9,7 @@ export default function CombinedChart({
   candles,
   prices,
 }: CombinedChartProps) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const ref = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
@@ -32,6 +18,7 @@ export default function CombinedChart({
 
     const svg = d3.select(ref.current);
     svg.selectAll("*").remove();
+    setHoverIndex(null);
 
     const margin = { top: 20, right: 40, bottom: 30, left: 60 };
     const candleWidth = 8;
@@ -50,7 +37,7 @@ export default function CombinedChart({
 
     const group = svg.append("g");
 
-    // --- Draw Gridlines ---
+    // MARK: Gridlines
 
     // Horizontal gridlines (prices)
     const yAxisGrid = d3
@@ -83,7 +70,7 @@ export default function CombinedChart({
       .attr("stroke", "#e5e7eb")
       .attr("stroke-dasharray", "2,2");
 
-    // --- Draw Candlesticks ---
+    // MARK: Candlesticks
     candles.forEach((candle, i) => {
       const color = candle.close > candle.open ? "#22c55e" : "#ef4444";
       const bodyHeight = Math.abs(y(candle.open) - y(candle.close)) || 1;
@@ -106,7 +93,28 @@ export default function CombinedChart({
         .attr("fill", color);
     });
 
-    // --- Draw Line Chart ---
+    // MARK: Hover overlay
+    svg
+      .append("rect")
+      .attr("fill", "transparent")
+      .attr("width", width)
+      .attr("height", height)
+      .on("mousemove", function (event) {
+        const [mouseX] = d3.pointer(event);
+        const x0 = xCandles.invert(mouseX);
+        const index = Math.round(x0);
+
+        if (index >= 0 && index < candles.length) {
+          setHoverIndex(index);
+        } else {
+          setHoverIndex(null);
+        }
+      })
+      .on("mouseleave", function () {
+        setHoverIndex(null);
+      });
+
+    // MARK: Line
     const closePrices = candles.map((c) => c.close);
 
     const line = d3
@@ -126,6 +134,34 @@ export default function CombinedChart({
     // --- Draw Y-Axis (Price scale) ---
     const yAxis = d3.axisLeft(y).ticks(6);
 
+    if (hoverIndex !== null && candles[hoverIndex]) {
+      const candle = candles[hoverIndex];
+
+      // Draw vertical line
+      group
+        .append("line")
+        .attr("x1", xCandles(hoverIndex))
+        .attr("x2", xCandles(hoverIndex))
+        .attr("y1", margin.top)
+        .attr("y2", height - margin.bottom)
+        .attr("stroke", "#9ca3af")
+        .attr("stroke-dasharray", "2,2")
+        .attr("stroke-width", 1);
+
+      // MARK: Tooltip
+      group
+        .append("text")
+        .attr("x", xCandles(hoverIndex) + 8)
+        .attr("y", margin.top + 15)
+        .attr("fill", "#666666")
+        .attr("font-size", "12px")
+        .text(
+          `O:${candle.open.toFixed(2)} H:${candle.high.toFixed(
+            2
+          )} L:${candle.low.toFixed(2)} C:${candle.close.toFixed(2)}`
+        );
+    }
+
     svg
       .append("g")
       .attr("transform", `translate(${margin.left},0)`)
@@ -133,7 +169,24 @@ export default function CombinedChart({
       .selectAll("text")
       .attr("fill", "#6b7280")
       .attr("font-size", "12px");
-  }, [candles, prices, height, width]);
+  }, [hoverIndex, candles, prices, height, width]);
 
   return <svg ref={ref} width={width} height={height} />;
 }
+
+// MARK: Types
+
+type Candle = {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  updates?: number;
+};
+
+type CombinedChartProps = {
+  width: number;
+  height: number;
+  candles: Candle[];
+  prices: number[];
+};
