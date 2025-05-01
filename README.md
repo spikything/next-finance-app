@@ -1,6 +1,6 @@
-A small realtime crypto price app using Twelvedata's WebSocket API and Next.js
+A small real-time crypto price tracker using Twelvedata's WebSocket API, Next.js and D3
 
-[![Next Finance App](https://www.spikything.com/projects/next-finance-app/next-finance-app.jpg)](https://next-finance-app-three.vercel.app/)
+[![Next Finance App](https://www.spikything.com/projects/next-finance-app/next-finance-app.jpg?v=2)](https://next-finance-app-three.vercel.app/)
 
 ## Getting Started
 
